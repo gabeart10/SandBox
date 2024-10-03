@@ -50,8 +50,7 @@ pico_enable_stdio_usb(SandBox 1)
 # Add the standard library to the build
 target_link_libraries(SandBox
         pico_stdlib
-        FreeRTOS-Kernel
-        FreeRTOS-Kernel-Heap1)
+        FreeRTOS-Kernel)
 
 # Add the standard include files to the build
 target_include_directories(SandBox PRIVATE
