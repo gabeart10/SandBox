@@ -4,10 +4,10 @@
             "name": "Pico",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${userHome}/.pico-sdk/sdk/2.0.0/**"
+                "${workspaceFolder}/pico-sdk/**"
             ],
             "forcedInclude": [
-                "${userHome}/.pico-sdk/sdk/2.0.0/src/common/pico_base_headers/include/pico.h",
+                "${workspaceFolder}/pico-sdk/src/common/pico_base_headers/include/pico.h",
                 "${workspaceFolder}/build/generated/pico_base/pico/config_autogen.h"
             ],
             "defines": [],

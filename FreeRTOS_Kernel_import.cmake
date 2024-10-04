@@ -10,7 +10,16 @@ if (DEFINED ENV{FREERTOS_KERNEL_PATH} AND (NOT FREERTOS_KERNEL_PATH))
     message("Using FREERTOS_KERNEL_PATH from environment ('${FREERTOS_KERNEL_PATH}')")
 endif ()
 
-set(FREERTOS_KERNEL_RP2040_RELATIVE_PATH "portable/ThirdParty/GCC/RP2040")
+if(PICO_PLATFORM STREQUAL "rp2040")
+    set(FREERTOS_KERNEL_RP2040_RELATIVE_PATH "portable/ThirdParty/GCC/RP2040")
+else()
+    if (PICO_PLATFORM STREQUAL "rp2350-riscv")
+        set(FREERTOS_KERNEL_RP2040_RELATIVE_PATH "portable/ThirdParty/GCC/RP2350_RISC-V")
+    else()
+        set(FREERTOS_KERNEL_RP2040_RELATIVE_PATH "portable/ThirdParty/GCC/RP2350_ARM_NTZ")
+    endif()
+endif()
+
 # undo the above
 set(FREERTOS_KERNEL_RP2040_BACK_PATH "../../../..")
 
@@ -54,7 +63,7 @@ if (NOT EXISTS ${FREERTOS_KERNEL_PATH})
     message(FATAL_ERROR "Directory '${FREERTOS_KERNEL_PATH}' not found")
 endif()
 if (NOT EXISTS ${FREERTOS_KERNEL_PATH}/${FREERTOS_KERNEL_RP2040_RELATIVE_PATH}/CMakeLists.txt)
-    message(FATAL_ERROR "Directory '${FREERTOS_KERNEL_PATH}' does not contain an RP2040 port here: ${FREERTOS_KERNEL_RP2040_RELATIVE_PATH}")
+    message(FATAL_ERROR "Directory '${FREERTOS_KERNEL_PATH}' does not contain a '${PICO_PLATFORM}' port here: ${FREERTOS_KERNEL_RP2040_RELATIVE_PATH}")
 endif()
 set(FREERTOS_KERNEL_PATH ${FREERTOS_KERNEL_PATH} CACHE PATH "Path to the FreeRTOS_KERNEL" FORCE)
 
