@@ -21,30 +21,31 @@ project(SandBox C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-# Add executable. Default name is the project name, version 0.1
+# COMMON
+set(COMMON_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/include)
+set(COMMON_SOURCES )
 
-add_executable(SandBox src/SandBox.c )
+# ---SIM TARGET---
+add_executable(SandBoxSim ${COMMON_SOURCES} src/SandBoxSim.c)
+target_include_directories(SandBoxSim PRIVATE ${COMMON_INCLUDES})
 
-pico_set_program_name(SandBox "SandBox")
-pico_set_program_version(SandBox "0.1")
+# ---PICO TARGET--- 
+add_executable(SandBoxPico ${COMMON_SOURCES} src/SandBoxPico.c )
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(SandBox 0)
-pico_enable_stdio_usb(SandBox 1)
+pico_enable_stdio_uart(SandBoxPico 0)
+pico_enable_stdio_usb(SandBoxPico 1)
 
 # Add the standard library to the build
-target_link_libraries(SandBox
+target_link_libraries(SandBoxPico
         pico_stdlib
         FreeRTOS-Kernel)
 
 # Add the standard include files to the build
-target_include_directories(SandBox PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}/include
-  ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
-)
+target_include_directories(SandBoxPico PRIVATE ${COMMON_INCLUDES})
 
 # Add any user requested libraries
-target_link_libraries(SandBox 
+target_link_libraries(SandBoxPico 
         hardware_spi
         hardware_i2c
         hardware_dma
@@ -55,4 +56,4 @@ target_link_libraries(SandBox
         
         )
 
-pico_add_extra_outputs(SandBox)
+pico_add_extra_outputs(SandBoxPico)
