@@ -23,11 +23,14 @@ pico_sdk_init()
 
 # COMMON
 set(COMMON_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/include)
-set(COMMON_SOURCES )
+set(COMMON_SOURCES src/Renderer.c)
 
 # ---SIM TARGET---
+find_package(SDL2 REQUIRED)
+
 add_executable(SandBoxSim ${COMMON_SOURCES} src/SandBoxSim.c)
-target_include_directories(SandBoxSim PRIVATE ${COMMON_INCLUDES})
+target_include_directories(SandBoxSim PRIVATE ${SDL2_INCLUDE_DIRS} ${COMMON_INCLUDES})
+target_link_libraries(SandBoxSim ${SDL2_LIBRARIES})
 
 # ---PICO TARGET--- 
 add_executable(SandBoxPico ${COMMON_SOURCES} src/SandBoxPico.c )
