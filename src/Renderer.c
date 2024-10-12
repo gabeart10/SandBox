@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "Pub_Renderer.h"
+#include "OBJReader.h"
 
 static inline void swap(uint32_t *a, uint32_t *b) {
     uint32_t swap_var = *a;
@@ -47,6 +49,21 @@ void DrawLine(Renderer *r, int32_t x0, int32_t y0, int32_t x1, int32_t y1, RGBDa
         if (error > dx) {
             y += (y1 > y0) ? 1 : -1;
             error -= dx*2;
+        }
+    }
+}
+
+void RenderWireframe(Renderer *r, OBJData data) {
+    for (uint32_t i = 0; i < data.numFaces; i++) {
+        OBJFace face = data.faces[i];
+        for (uint32_t j = 0; j < 3; j++) {
+            Vec3f v0 = data.verts[face.vertIdxs[j]];
+            Vec3f v1 = data.verts[face.vertIdxs[(j+1)%3]];
+            uint32_t x0 = (v0.x+1.0)*r->w/2.0;
+            uint32_t y0 = r->h - (v0.y+1.0)*r->h/2.0;
+            uint32_t x1 = (v1.x+1.0)*r->w/2.0;
+            uint32_t y1 = r->h - (v1.y+1.0)*r->h/2.0;
+            DrawLine(r, x0, y0, x1, y1, (RGBData) {.r = 255, .g = 255, .b = 255});
         }
     }
 }

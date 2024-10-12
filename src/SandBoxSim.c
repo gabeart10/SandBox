@@ -1,9 +1,11 @@
-#include "SDL.h"
 #include <stdint.h>
+#include <stdio.h>
+#include "SDL.h"
+#include "OBJReader.h"
 #include "Pub_Renderer.h"
 
-#define WINDOW_WIDTH (128)
-#define WINDOW_HEIGHT (96)
+#define WINDOW_WIDTH (128*10)
+#define WINDOW_HEIGHT (96*10)
 
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
@@ -20,8 +22,7 @@ int main() {
     Renderer *r = CreateRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_Surface *screenSurface = SDL_GetWindowSurface(window);
 
-    DrawLine(r, 30, 30, 100, 90, (RGBData) {.r = 255, .g = 255, .b = 255});
-    DrawLine(r, 90, 30, 30, 90, (RGBData) {.r = 255, .g = 255, .b = 255});
+    RenderWireframe(r, ReadOBJ("../objs/suzanne.obj"));
     SDL_Event event;
     while (1) {
         if (SDL_PollEvent(&event)) {
