@@ -28,8 +28,9 @@ typedef struct {
 } Vec3f;
 
 typedef struct {
-   Vec3f Verts[3]; 
-} Face;
+    uint32_t x;
+    uint32_t y;
+} Vec2ui;
 
 typedef struct {
     uint32_t vertIdxs[3];
@@ -55,5 +56,7 @@ Renderer * CreateRenderer(uint32_t width, uint32_t height);
 void DrawLine(Renderer *r, int32_t x0, int32_t y0, int32_t x1, int32_t y1, RGBData color);
 
 void RenderWireframe(Renderer *r, OBJData data);
+
+void DrawTriangle(Renderer *r, Vec2ui v0, Vec2ui v1, Vec2ui v2, RGBData color);
 
 #endif

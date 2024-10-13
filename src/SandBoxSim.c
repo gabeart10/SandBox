@@ -4,8 +4,8 @@
 #include "OBJReader.h"
 #include "Pub_Renderer.h"
 
-#define WINDOW_WIDTH (128*10)
-#define WINDOW_HEIGHT (96*10)
+#define WINDOW_WIDTH (128)
+#define WINDOW_HEIGHT (96)
 
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
@@ -22,7 +22,13 @@ int main() {
     Renderer *r = CreateRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_Surface *screenSurface = SDL_GetWindowSurface(window);
 
-    RenderWireframe(r, ReadOBJ("../objs/suzanne.obj"));
+    //RenderWireframe(r, ReadOBJ("../objs/suzanne.obj"));
+    Vec2ui t0[3] = {{10, 60}, {50, 90}, {60, 60}};
+    Vec2ui t1[3] = {{120, 40}, {100, 1}, {50, 30}};
+    Vec2ui t2[3] = {{120, 80}, {50, 90}, {60, 60}};
+    DrawTriangle(r, t0[0], t0[1], t0[2], (RGBData) {255, 0, 0});
+    DrawTriangle(r, t1[0], t1[1], t1[2], (RGBData) {0, 255, 0});
+    DrawTriangle(r, t2[0], t2[1], t2[2], (RGBData) {0, 0, 255});
     SDL_Event event;
     while (1) {
         if (SDL_PollEvent(&event)) {
