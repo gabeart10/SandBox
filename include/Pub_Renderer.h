@@ -2,6 +2,7 @@
 #define PUB_RENDERER_H
 
 #include <stdint.h>
+#include "Vectors.h"
 
 typedef struct {
     uint8_t r;
@@ -13,24 +14,8 @@ typedef struct {
 typedef struct {
     uint32_t w, h;
     RGBData *framebuf; 
+    int32_t *zbuffer;
 } Renderer;
-
-typedef struct {
-    uint32_t x;
-    uint32_t y;
-    uint32_t z;
-} Vec3ui;
-
-typedef struct {
-    float x;
-    float y;
-    float z;
-} Vec3f;
-
-typedef struct {
-    uint32_t x;
-    uint32_t y;
-} Vec2ui;
 
 typedef struct {
     uint32_t vertIdxs[3];
@@ -57,6 +42,6 @@ void DrawLine(Renderer *r, int32_t x0, int32_t y0, int32_t x1, int32_t y1, RGBDa
 
 void RenderWireframe(Renderer *r, OBJData data);
 
-void DrawTriangle(Renderer *r, Vec2ui v0, Vec2ui v1, Vec2ui v2, RGBData color);
+void DrawTriangle(Renderer *r, Vec2i v0, Vec2i v1, Vec2i v2, RGBData color);
 
 #endif

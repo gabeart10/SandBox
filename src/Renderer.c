@@ -1,19 +1,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <stdio.h>
+#include <math.h>
 #include "Pub_Renderer.h"
 #include "OBJReader.h"
 
 #define swap(x, y) do { typeof(x) SWAP = x; x = y; y = SWAP; } while (0)
+
+static inline int32_t max(int32_t a, int32_t b) {
+    return (a > b) ? a : b;
+}
+
+static inline int32_t min(int32_t a, int32_t b) {
+    return (a < b) ? a : b;
+}
 
 Renderer * CreateRenderer(uint32_t width, uint32_t height) {
     Renderer *r = (Renderer *) malloc(sizeof(Renderer));
     r->w = width;
     r->h = height;
     r->framebuf = (RGBData *) malloc(sizeof(RGBData) * width * height);
+    r->zbuffer = (int32_t *) malloc(sizeof(int32_t) * width * height);
 
     memset(r->framebuf, 0, width * height * sizeof(RGBData));
+    memset(r->zbuffer, INT32_MIN, width * height * sizeof(int32_t));
 
     return r;
 }
@@ -64,14 +74,26 @@ void RenderWireframe(Renderer *r, OBJData data) {
     }
 }
 
+static Vec3f GetBarycentric(Vec2i a, Vec2i b, Vec2i c, Vec2i p) {
+    Vec3f vx = {b.x-a.x, c.x-a.x, a.x-p.x};
+    Vec3f vy = {b.y-a.y, c.y-a.y, a.y-p.y};
+    Vec3f u = Vec3f_CrossProduct(vx, vy);
+
+    if (abs(u.z) < 1) {
+        return (Vec3f) {-1, 1, 1};
+    }
+    return (Vec3f) {1.0f-(u.x+u.y)/u.z, u.x/u.z, u.y/u.z};
+}
+
 // TODO: Test other forms of rasterization on HW
-void DrawTriangle(Renderer *r, Vec2ui v0, Vec2ui v1, Vec2ui v2, RGBData color) {
+void DrawTriangle(Renderer *r, Vec2i v0, Vec2i v1, Vec2i v2, RGBData color) {
+    if (v0.y == v1.y && v0.y == v2.y) return;
     if (v0.y > v1.y) swap(v0, v1);
     if (v0.y > v2.y) swap(v0, v2);
     if (v1.y > v2.y) swap(v1, v2);
     int32_t tri_height = v2.y - v0.y;
     for (uint32_t y = v0.y; y <= v2.y; y++) {
-        Vec2ui s0, s1;
+        Vec2i s0, s1;
         if (y > v1.y || v1.y == v0.y) {
             // In 2nd Segment 
             s0 = v1;
@@ -85,12 +107,27 @@ void DrawTriangle(Renderer *r, Vec2ui v0, Vec2ui v1, Vec2ui v2, RGBData color) {
         int32_t seg_height = s1.y - s0.y;
         int32_t alpha_num = y - v0.y;
         int32_t beta_num = y - s0.y;
-        uint32_t Ax = v0.x + (((int32_t) v2.x - (int32_t) v0.x)*alpha_num)/tri_height;
-        uint32_t Bx = s0.x + (((int32_t) s1.x - (int32_t) s0.x)*beta_num)/seg_height;
+        int32_t Ax = v0.x + ((v2.x - v0.x)*alpha_num)/tri_height;
+        int32_t Bx = s0.x + ((s1.x - s0.x)*beta_num)/seg_height;
         if (Ax > Bx) swap(Ax, Bx);
 
-        for (uint32_t i = Ax; i <= Bx; i++) {
+        for (int32_t i = Ax; i <= Bx; i++) {
             SetPixel(r, i, y, color);
         }
     }
 }
+/*void DrawTriangle(Renderer *r, Vec2i v0, Vec2i v1, Vec2i v2, RGBData color) {
+    Vec2i boxmin = {max(0, min(v0.x, min(v1.x, min(v2.x, r->w-1)))),
+                    max(0, min(v0.y, min(v1.y, min(v2.y, r->h-1))))};
+    Vec2i boxmax = {min(r->w-1, max(v0.x, max(v1.x, max(v2.x, 0)))),
+                    min(r->h-1, max(v0.y, max(v1.y, max(v2.y, 0))))};
+    Vec2i p;
+    for (p.x = boxmin.x; p.x <= boxmax.x; p.x++) {
+        for (p.y = boxmin.y; p.y <= boxmax.y; p.y++) {
+            Vec3f bc_cord = GetBarycentric(v0, v1, v2, p);
+            if (bc_cord.x >= 0 && bc_cord.y >= 0 && bc_cord.z >= 0) {
+                SetPixel(r, p.x, p.y, color);
+            }
+        }
+    }
+}*/

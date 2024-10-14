@@ -23,14 +23,14 @@ pico_sdk_init()
 
 # COMMON
 set(COMMON_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/include)
-set(COMMON_SOURCES src/Renderer.c src/OBJReader.c)
+set(COMMON_SOURCES src/Renderer.c)
 
 # ---SIM TARGET---
 find_package(SDL2 REQUIRED)
 
-add_executable(SandBoxSim ${COMMON_SOURCES} src/SandBoxSim.c)
+add_executable(SandBoxSim ${COMMON_SOURCES} src/SandBoxSim.c src/OBJReader.c)
 target_include_directories(SandBoxSim PRIVATE ${SDL2_INCLUDE_DIRS} ${COMMON_INCLUDES})
-target_link_libraries(SandBoxSim ${SDL2_LIBRARIES})
+target_link_libraries(SandBoxSim m ${SDL2_LIBRARIES})
 
 # ---PICO TARGET--- 
 add_executable(SandBoxPico ${COMMON_SOURCES} src/SandBoxPico.c )
@@ -42,7 +42,8 @@ pico_enable_stdio_usb(SandBoxPico 1)
 # Add the standard library to the build
 target_link_libraries(SandBoxPico
         pico_stdlib
-        FreeRTOS-Kernel)
+        FreeRTOS-Kernel
+        m)
 
 # Add the standard include files to the build
 target_include_directories(SandBoxPico PRIVATE ${COMMON_INCLUDES})
