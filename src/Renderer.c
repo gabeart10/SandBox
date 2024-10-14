@@ -23,10 +23,16 @@ Renderer * CreateRenderer(uint32_t width, uint32_t height) {
     r->framebuf = (RGBData *) malloc(sizeof(RGBData) * width * height);
     r->zbuffer = (int32_t *) malloc(sizeof(int32_t) * width * height);
 
-    memset(r->framebuf, 0, width * height * sizeof(RGBData));
-    memset(r->zbuffer, INT32_MIN, width * height * sizeof(int32_t));
+    ClearBuffers(r);
 
     return r;
+}
+
+void ClearBuffers(Renderer *r) {
+    memset(r->framebuf, 0, r->w * r->h * sizeof(RGBData));
+    for (uint32_t i = 0; i < r->w * r->h; i++) {
+        r->zbuffer[i] = INT32_MIN;
+    }
 }
 
 void DrawLine(Renderer *r, int32_t x0, int32_t y0, int32_t x1, int32_t y1, RGBData color) {
@@ -94,7 +100,9 @@ void DrawTriangle(Renderer *r, Vec3i v0, Vec3i v1, Vec3i v2, RGBData color) {
     if (v0.y > v2.y) swap(v0, v2);
     if (v1.y > v2.y) swap(v1, v2);
     int32_t tri_height = v2.y - v0.y;
-    for (uint32_t y = v0.y; y <= v2.y; y++) {
+    int32_t y_start = min(r->h-1, max(0, v0.y));
+    int32_t y_end = max(0, min(r->h-1, v2.y));
+    for (uint32_t y = y_start; y <= y_end; y++) {
         Vec3i s0, s1;
         if (y > v1.y || v1.y == v0.y) {
             // In 2nd Segment 
@@ -117,6 +125,8 @@ void DrawTriangle(Renderer *r, Vec3i v0, Vec3i v1, Vec3i v2, RGBData color) {
             swap(Ax, Bx);
             swap(Az, Bz);
         }
+        Ax = min(r->w-1, max(0, Ax));
+        Bx = max(0, min(r->w-1, Bx));
 
         // Protect for div by 0
         int32_t z_div = (Ax == Bx) ? 1 : (Bx - Ax);
@@ -125,7 +135,9 @@ void DrawTriangle(Renderer *r, Vec3i v0, Vec3i v1, Vec3i v2, RGBData color) {
             //Vec3f bay = GetBarycentric(v0, v1, v2, (Vec2i) {i, y});
             //int32_t z = v0.z*bay.x + v1.z*bay.y + v1.z*bay.z;
             //color = (RGBData) {(uint32_t)z, (uint32_t)z, (uint32_t)z};
-            SetPixelZ(r, i, y, z, color);
+            if (z <= 0 && z >= -VIEWPORT_DEPTH) {
+                SetPixelZ(r, i, y, z, color);
+            }
         }
     }
 }
@@ -164,7 +176,7 @@ TformMatrix ViewportTform(int32_t x, int32_t y, int32_t w, int32_t h) {
     int32_t d = VIEWPORT_DEPTH;
     TformMatrix out = {{{w/2,    0,   0, x + w/2},
                         {  0, -h/2,   0, y + h/2},
-                        {  0,    0, d/2,     d/2},
+                        {  0,    0, d/8,       0},
                         {  0,    0,   0,       1}}};
     return out;
 }

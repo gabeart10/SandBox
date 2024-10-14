@@ -39,7 +39,7 @@ static inline void SetPixel(Renderer *r, uint32_t x, uint32_t y, RGBData color) 
     r->framebuf[GetPixelOffset(r, x, y)] = color;
 }
 
-static inline void SetPixelZ(Renderer *r, uint32_t x, uint32_t y, uint32_t z, RGBData color) {
+static inline void SetPixelZ(Renderer *r, uint32_t x, uint32_t y, int32_t z, RGBData color) {
     if (z > r->zbuffer[GetPixelOffset(r, x, y)]) {
         r->zbuffer[GetPixelOffset(r, x, y)] = z;
         SetPixel(r, x, y, color);
@@ -47,6 +47,8 @@ static inline void SetPixelZ(Renderer *r, uint32_t x, uint32_t y, uint32_t z, RG
 }
 
 Renderer * CreateRenderer(uint32_t width, uint32_t height);
+
+void ClearBuffers(Renderer *r);
 
 void DrawLine(Renderer *r, int32_t x0, int32_t y0, int32_t x1, int32_t y1, RGBData color);
 
