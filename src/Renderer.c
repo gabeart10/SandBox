@@ -86,14 +86,14 @@ static Vec3f GetBarycentric(Vec2i a, Vec2i b, Vec2i c, Vec2i p) {
 }
 
 // TODO: Test other forms of rasterization on HW
-void DrawTriangle(Renderer *r, Vec2i v0, Vec2i v1, Vec2i v2, RGBData color) {
+void DrawTriangle(Renderer *r, Vec3i v0, Vec3i v1, Vec3i v2, RGBData color) {
     if (v0.y == v1.y && v0.y == v2.y) return;
     if (v0.y > v1.y) swap(v0, v1);
     if (v0.y > v2.y) swap(v0, v2);
     if (v1.y > v2.y) swap(v1, v2);
     int32_t tri_height = v2.y - v0.y;
     for (uint32_t y = v0.y; y <= v2.y; y++) {
-        Vec2i s0, s1;
+        Vec3i s0, s1;
         if (y > v1.y || v1.y == v0.y) {
             // In 2nd Segment 
             s0 = v1;
@@ -109,10 +109,18 @@ void DrawTriangle(Renderer *r, Vec2i v0, Vec2i v1, Vec2i v2, RGBData color) {
         int32_t beta_num = y - s0.y;
         int32_t Ax = v0.x + ((v2.x - v0.x)*alpha_num)/tri_height;
         int32_t Bx = s0.x + ((s1.x - s0.x)*beta_num)/seg_height;
-        if (Ax > Bx) swap(Ax, Bx);
+        int32_t Az = v0.z + ((v2.z - v0.z)*alpha_num)/tri_height;
+        int32_t Bz = s0.z + ((s1.z - s0.z)*beta_num)/seg_height;
+        if (Ax > Bx) {
+            swap(Ax, Bx);
+            swap(Az, Bz);
+        }
 
+        // Protect for div by 0
+        int32_t z_div = (Ax == Bx) ? 1 : (Bx - Ax);
         for (int32_t i = Ax; i <= Bx; i++) {
-            SetPixel(r, i, y, color);
+            int32_t z = Az + ((Bz - Az)*(i - Ax))/z_div;
+            SetPixelZ(r, i, y, z, color);
         }
     }
 }

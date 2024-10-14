@@ -11,6 +11,12 @@ typedef struct {
 } Vec3ui;
 
 typedef struct {
+    int32_t x;
+    int32_t y;
+    int32_t z;
+} Vec3i;
+
+typedef struct {
     float x;
     float y;
     float z;
