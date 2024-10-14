@@ -23,7 +23,7 @@ int main() {
     Renderer *r = CreateRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_Surface *screenSurface = SDL_GetWindowSurface(window);
 
-    OBJData data = ReadOBJ("../objs/head.obj");
+    OBJData data = ReadOBJ("../objs/suzanne.obj");
     Vec3f light_dir = {0, 0, -1};
     clock_t start = clock();
     for (uint32_t i = 0; i < data.numFaces; i++) {
@@ -32,7 +32,7 @@ int main() {
         OBJFace face = data.faces[i];
         for (uint32_t j = 0; j < 3; j++) {
             Vec3f cord = data.verts[face.vertIdxs[j]];
-            scords[j] = (Vec3i) {(cord.x+2.0)*r->w/4.0, r->h - (cord.y+2.0)*r->h/4.0, 1000*cord.z};
+            scords[j] = (Vec3i) {(cord.x+2.0)*r->w/4.0, r->h - (cord.y+2.0)*r->h/4.0, (1+cord.z)*1000/2.0};
             wcords[j] = cord;
         }
         Vec3f n = Vec3f_CrossProduct(Vec3f_Subtract(wcords[2], wcords[0]), Vec3f_Subtract(wcords[1], wcords[0]));

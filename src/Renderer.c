@@ -86,6 +86,7 @@ static Vec3f GetBarycentric(Vec2i a, Vec2i b, Vec2i c, Vec2i p) {
 }
 
 // TODO: Test other forms of rasterization on HW
+// TODO: Fix bug with negative Zs
 void DrawTriangle(Renderer *r, Vec3i v0, Vec3i v1, Vec3i v2, RGBData color) {
     if (v0.y == v1.y && v0.y == v2.y) return;
     if (v0.y > v1.y) swap(v0, v1);
