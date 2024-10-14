@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <time.h>
+#include <math.h>
+#include <stdbool.h>
 #include "SDL.h"
 #include "OBJReader.h"
 #include "Pub_Renderer.h"
@@ -41,7 +43,7 @@ int main() {
             Vec3i scords[3];
             Vec3f wcords[3];
             OBJFace face = data.faces[i];
-            bool keep_face = TRUE;
+            bool keep_face = true;
             for (uint32_t j = 0; j < 3; j++) {
                 Vec3f cord = data.verts[face.vertIdxs[j]];
                 wcords[j] = cord;
@@ -49,12 +51,17 @@ int main() {
                 TformMatrix per = PerspectiveTform(Vec3f_Magnitude(Vec3f_Subtract(camera_eye, camera_center)));
                 TformMatrix view = ViewportTform(0, 0, r->w, r->h);
                 TformPoint lookp = TformMatrix_Apply(look, Vec3f_to_TformPoint(cord));
+                if (fabsf(lookp.data[0]) > 1.0 || fabsf(lookp.data[1]) > 1.0 || lookp.data[2] < -4.0 || lookp.data[2] > 0) {
+                    keep_face = false;
+                    break;
+                } 
                 TformPoint perp = TformMatrix_Apply(per, lookp);
                 TformPoint viewp = TformMatrix_Apply(view, perp);
                 Vec3f scordf = TformPoint_to_Vec3f(viewp);
                 scords[j] = (Vec3i) {scordf.x, scordf.y, scordf.z};
             }
 
+            if (!keep_face) continue;
             Vec3f n = Vec3f_CrossProduct(Vec3f_Subtract(wcords[2], wcords[0]), Vec3f_Subtract(wcords[1], wcords[0]));
             n = Vec3f_Normalize(n);
             Vec3f light_dir = {-camera_eye.x, -camera_eye.y, -camera_eye.z};
@@ -64,10 +71,10 @@ int main() {
                 DrawTriangle(r, scords[0], scords[1], scords[2], (RGBData) {color, color, color});
             }
         }
-        if (camera_center.z <= -4 || camera_center.z >= 4) {
+        if (camera_eye.z <= 0.8 || camera_eye.z >= 2) {
             eye_delta_z *= -1;
         }
-        camera_center.z += eye_delta_z;
+        //camera_center.z += eye_delta_z;
         camera_eye.z += eye_delta_z;
 
         float render_time = ((double) (clock() - start))/CLOCKS_PER_SEC;

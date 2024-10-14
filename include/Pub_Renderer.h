@@ -5,7 +5,7 @@
 #include "Vectors.h"
 #include "Matrix.h"
 
-#define VIEWPORT_DEPTH (255)
+#define VIEWPORT_DEPTH (255*5)
 
 typedef struct {
     uint8_t r;
