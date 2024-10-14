@@ -4,6 +4,7 @@
 #include <math.h>
 #include "Pub_Renderer.h"
 #include "OBJReader.h"
+#include "Matrix.h"
 
 #define swap(x, y) do { typeof(x) SWAP = x; x = y; y = SWAP; } while (0)
 
@@ -74,7 +75,7 @@ void RenderWireframe(Renderer *r, OBJData data) {
     }
 }
 
-static Vec3f GetBarycentric(Vec2i a, Vec2i b, Vec2i c, Vec2i p) {
+static Vec3f GetBarycentric(Vec3i a, Vec3i b, Vec3i c, Vec2i p) {
     Vec3f vx = {b.x-a.x, c.x-a.x, a.x-p.x};
     Vec3f vy = {b.y-a.y, c.y-a.y, a.y-p.y};
     Vec3f u = Vec3f_CrossProduct(vx, vy);
@@ -121,6 +122,9 @@ void DrawTriangle(Renderer *r, Vec3i v0, Vec3i v1, Vec3i v2, RGBData color) {
         int32_t z_div = (Ax == Bx) ? 1 : (Bx - Ax);
         for (int32_t i = Ax; i <= Bx; i++) {
             int32_t z = Az + ((Bz - Az)*(i - Ax))/z_div;
+            //Vec3f bay = GetBarycentric(v0, v1, v2, (Vec2i) {i, y});
+            //int32_t z = v0.z*bay.x + v1.z*bay.y + v1.z*bay.z;
+            //color = (RGBData) {(uint32_t)z, (uint32_t)z, (uint32_t)z};
             SetPixelZ(r, i, y, z, color);
         }
     }
@@ -140,3 +144,33 @@ void DrawTriangle(Renderer *r, Vec3i v0, Vec3i v1, Vec3i v2, RGBData color) {
         }
     }
 }*/
+
+TformMatrix LookAtTform(Vec3f eye, Vec3f center, Vec3f up) {
+    Vec3f z = Vec3f_Normalize(Vec3f_Subtract(eye, center));
+    Vec3f x = Vec3f_Normalize(Vec3f_CrossProduct(up, z));
+    Vec3f y = Vec3f_Normalize(Vec3f_CrossProduct(z, x));
+    TformMatrix Minv = {{{x.x, x.y, x.z, 0},
+                         {y.x, y.y, y.z, 0},
+                         {z.x, z.y, z.z, 0},
+                         {0,   0,   0,   1}}};
+    TformMatrix Tr = {{{1, 0, 0, -eye.x},
+                       {0, 1, 0, -eye.y},
+                       {0, 0, 1, -eye.z},
+                       {0, 0, 0, 1}}};
+    return TformMatrix_Multiply(Minv, Tr);
+}
+
+TformMatrix ViewportTform(int32_t x, int32_t y, int32_t w, int32_t h) {
+    int32_t d = VIEWPORT_DEPTH;
+    TformMatrix out = {{{w/2,    0,   0, x + w/2},
+                        {  0, -h/2,   0, y + h/2},
+                        {  0,    0, d/2,     d/2},
+                        {  0,    0,   0,       1}}};
+    return out;
+}
+
+TformMatrix PerspectiveTform(float c) {
+    TformMatrix out = GetIdentityMatrix();
+    out.data[3][2] = -1.0f/c;
+    return out;
+}

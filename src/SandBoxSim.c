@@ -4,6 +4,7 @@
 #include "SDL.h"
 #include "OBJReader.h"
 #include "Pub_Renderer.h"
+#include "Matrix.h"
 
 #define WINDOW_WIDTH (128*10)
 #define WINDOW_HEIGHT (96*10)
@@ -23,8 +24,10 @@ int main() {
     Renderer *r = CreateRenderer(WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_Surface *screenSurface = SDL_GetWindowSurface(window);
 
-    OBJData data = ReadOBJ("../objs/suzanne.obj");
-    Vec3f light_dir = {0, 0, -1};
+    OBJData data = ReadOBJ("../objs/head.obj");
+    Vec3f camera_center = {0, 0, 0};
+    Vec3f camera_eye = {1, 0, 0};
+    Vec3f camera_up = {0, 1, 0};
     clock_t start = clock();
     for (uint32_t i = 0; i < data.numFaces; i++) {
         Vec3i scords[3];
@@ -32,14 +35,24 @@ int main() {
         OBJFace face = data.faces[i];
         for (uint32_t j = 0; j < 3; j++) {
             Vec3f cord = data.verts[face.vertIdxs[j]];
-            scords[j] = (Vec3i) {(cord.x+2.0)*r->w/4.0, r->h - (cord.y+2.0)*r->h/4.0, (1+cord.z)*1000/2.0};
             wcords[j] = cord;
+            TformMatrix look = LookAtTform(camera_eye, camera_center, camera_up);
+            TformMatrix per = PerspectiveTform(Vec3f_Magnitude(Vec3f_Subtract(camera_eye, camera_center)));
+            TformMatrix view = ViewportTform(0, 0, r->w, r->h);
+            TformPoint lookp = TformMatrix_Apply(look, Vec3f_to_TformPoint(cord));
+            TformPoint perp = TformMatrix_Apply(per, lookp);
+            TformPoint viewp = TformMatrix_Apply(view, perp);
+            Vec3f scordf = TformPoint_to_Vec3f(viewp);
+            scords[j] = (Vec3i) {scordf.x, scordf.y, scordf.z};
         }
+
         Vec3f n = Vec3f_CrossProduct(Vec3f_Subtract(wcords[2], wcords[0]), Vec3f_Subtract(wcords[1], wcords[0]));
         n = Vec3f_Normalize(n);
-        float inten = Vec3f_DotProduct(n, light_dir);
+        Vec3f light_dir = {-camera_eye.x, -camera_eye.y, -camera_eye.z};
+        float inten = Vec3f_DotProduct(n, Vec3f_Normalize(light_dir));
         if (inten > 0) {
-            DrawTriangle(r, scords[0], scords[1], scords[2], (RGBData) {255*inten, 255*inten, 255*inten});
+            uint32_t color = 205*inten + 50;
+            DrawTriangle(r, scords[0], scords[1], scords[2], (RGBData) {color, color, color});
         }
     }
     printf("Time Taken: %fsec\n", ((double) (clock() - start))/CLOCKS_PER_SEC);

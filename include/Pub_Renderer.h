@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 #include "Vectors.h"
+#include "Matrix.h"
+
+#define VIEWPORT_DEPTH (255)
 
 typedef struct {
     uint8_t r;
@@ -50,5 +53,11 @@ void DrawLine(Renderer *r, int32_t x0, int32_t y0, int32_t x1, int32_t y1, RGBDa
 void RenderWireframe(Renderer *r, OBJData data);
 
 void DrawTriangle(Renderer *r, Vec3i v0, Vec3i v1, Vec3i v2, RGBData color);
+
+TformMatrix LookAtTform(Vec3f eye, Vec3f center, Vec3f up);
+
+TformMatrix ViewportTform(int32_t x, int32_t y, int32_t w, int32_t h);
+
+TformMatrix PerspectiveTform(float c);
 
 #endif
