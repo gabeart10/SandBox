@@ -51,4 +51,9 @@ static inline Vec3f TformPoint_to_Vec3f(TformPoint p) {
     return out;
 }
 
+static inline Vec3f TformMatrix_Apply_Vec3f(TformMatrix m, Vec3f v) {
+    return TformPoint_to_Vec3f(TformMatrix_Apply(m, Vec3f_to_TformPoint(v)));
+}
+
+
 #endif

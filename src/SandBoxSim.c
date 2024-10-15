@@ -26,11 +26,13 @@ int main() {
     View *v = CreateView(WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_Surface *screenSurface = SDL_GetWindowSurface(window);
 
-    ModelData data = ReadOBJ("../objs/head.obj");
-    v->look_pos = V3F(0, 0, 0);
-    v->eye_pos = V3F(0, 0, 5);
+    ModelData data = ReadOBJ("../objs/suzanne.obj");
+    data.scale = V3F(5, 5, 5);
+    data.world_loc = V3F(0, 0, -20);
+    v->look_pos = V3F(0, 0, -20);
+    v->eye_pos = V3F(0, 0, 0);
     v->fov = 45;
-    float eye_delta_z = 0.1;
+    float eye_angle = 0;
     SDL_Event event;
     while (1) {
         if (SDL_PollEvent(&event)) {
@@ -38,14 +40,14 @@ int main() {
         }
 
         clock_t start = clock();
+        v->eye_pos = TformPoint_to_Vec3f(TformMatrix_Apply(TranslateTform(V3F(0, 0, -20)),
+                                         TformMatrix_Apply(RotationYTform(eye_angle), (TformPoint) {{0, 0, 12, 1}})));
+        eye_angle += 5;
+        if (eye_angle >= 360) eye_angle -= 360;
         RenderModel(v, 1, data);
-        if (v->eye_pos.z <= 0.5 || v->eye_pos.z >= 5) {
-            eye_delta_z *= -1;
-        }
-        v->eye_pos.z += eye_delta_z;
 
         float render_time = ((double) (clock() - start))/CLOCKS_PER_SEC;
-        printf("Time Taken: %fsec\nCenter Z: %f\n", render_time, v->eye_pos.z);
+        printf("Time Taken: %fsec\nRot: %f\n", render_time, eye_angle);
         float sleep_time = 1.0f/15.0f - render_time;
         if (sleep_time > 0) {
             SDL_Delay(sleep_time*1000);

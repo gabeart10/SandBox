@@ -30,7 +30,7 @@ typedef struct {
 typedef struct {
     uint32_t w, h;
     RGBData *framebuf; 
-    uint32_t *zbuffer;
+    int32_t *zbuffer;
     float fov;
     Vec3f eye_pos;
     Vec3f look_pos;
@@ -61,6 +61,78 @@ static inline void SetPixelZ(View *v, uint32_t x, uint32_t y, uint32_t z, RGBDat
     }
 }
 
+static inline TformMatrix TranslateTform(Vec3f t) {
+    TformMatrix out = {{{ 1, 0, 0, t.x},
+                        { 0, 1, 0, t.y},
+                        { 0, 0, 1, t.z},
+                        { 0, 0, 0,   1}}};
+    return out; 
+}
+
+static inline TformMatrix LookAtTform(Vec3f eye, Vec3f center, Vec3f up) {
+    Vec3f z = Vec3f_Normalize(Vec3f_Subtract(eye, center));
+    Vec3f x = Vec3f_Normalize(Vec3f_CrossProduct(up, z));
+    Vec3f y = Vec3f_Normalize(Vec3f_CrossProduct(z, x));
+    TformMatrix Minv = {{{x.x, x.y, x.z, 0},
+                         {y.x, y.y, y.z, 0},
+                         {z.x, z.y, z.z, 0},
+                         {0,   0,   0,   1}}};
+    return TformMatrix_Multiply(Minv, TranslateTform(Vec3f_Negate(eye)));
+}
+
+static inline TformMatrix ViewportTform(int32_t x, int32_t y, int32_t w, int32_t h) {
+    TformMatrix out = {{{w/2,    0,            0, x + w/2},
+                        {  0, -h/2,            0, y + h/2},
+                        {  0,    0,    INT32_MAX,      -1},
+                        {  0,    0,            0,       1}}};
+    return out;
+}
+
+static inline TformMatrix PerspectiveTform(float fov, float aspect, float zNear, float zFar) {
+    float f = 1/tanf(fov);
+    float zscale = (zFar+zNear)/(zNear-zFar);
+    float ztrans = 2*zFar*zNear/(zNear-zFar);
+    TformMatrix out = {{{f/aspect, 0,      0,      0},
+                        {       0, f,      0,      0},
+                        {       0, 0, zscale, ztrans},
+                        {       0, 0,     -1,      0}}};
+    return out;
+}
+
+static inline TformMatrix ScaleTform(Vec3f s) {
+    TformMatrix out = {{{s.x,   0,   0, 0},
+                        {  0, s.y,   0, 0},
+                        {  0,   0, s.z, 0},
+                        {  0,   0,   0, 1}}};
+    return out; 
+}
+
+static inline TformMatrix RotationXTform(float rot) {
+    rot = rot*2*M_PI/360;
+    TformMatrix out = {{{1,         0,          0, 0},
+                        {0, cosf(rot), -sinf(rot), 0},
+                        {0, sinf(rot),  cosf(rot), 0},
+                        {0,         0,          0, 1}}};
+    return out;
+}
+
+static inline TformMatrix RotationYTform(float rot) {
+    rot = rot*2*M_PI/360;
+    TformMatrix out = {{{ cosf(rot), 0, sinf(rot), 0},
+                        {         0, 1,         0, 0},
+                        {-sinf(rot), 0, cosf(rot), 0},
+                        {         0, 0,         0, 1}}};
+    return out;
+}
+
+static inline TformMatrix RotationZTform(float rot) {
+    rot = rot*2*M_PI/360;
+    TformMatrix out = {{{cosf(rot), -sinf(rot), 0, 0},
+                        {sinf(rot),  cosf(rot), 0, 0},
+                        {        0,          0, 1, 0},
+                        {        0,          0, 0, 1}}};
+    return out;
+}
 
 View * CreateView(uint32_t width, uint32_t height);
 

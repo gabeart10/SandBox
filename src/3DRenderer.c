@@ -20,15 +20,6 @@ static inline int32_t min(int32_t a, int32_t b) {
 
 static Vec3f GetBarycentric(Vec3i a, Vec3i b, Vec3i c, Vec2i p);
 
-static TformMatrix LookAtTform(Vec3f eye, Vec3f center, Vec3f up);
-static TformMatrix ViewportTform(int32_t x, int32_t y, int32_t w, int32_t h);
-static TformMatrix PerspectiveTform(float fov, float aspect, float zNear, float zFar);
-static TformMatrix ScaleTform(Vec3f s);
-static TformMatrix TranslateTform(Vec3f t);
-static TformMatrix RotationXTform(float rot);
-static TformMatrix RotationYTform(float rot);
-static TformMatrix RotationZTform(float rot);
-
 View * CreateView(uint32_t width, uint32_t height) {
     View *v = (View *) malloc(sizeof(View));
     v->w = width;
@@ -36,7 +27,7 @@ View * CreateView(uint32_t width, uint32_t height) {
     v->look_pos = (Vec3f) {0, 0, 0};
     v->eye_pos = (Vec3f) {0, 0, 1};
     v->framebuf = (RGBData *) malloc(sizeof(RGBData) * width * height);
-    v->zbuffer = (uint32_t *) malloc(sizeof(uint32_t) * width * height);
+    v->zbuffer = (int32_t *) malloc(sizeof(int32_t) * width * height);
 
     ClearViewBuffers(v);
 
@@ -52,14 +43,14 @@ void ClearViewBuffers(View *v) {
 
 void RenderModel(View *views, uint32_t view_count, ModelData m) {
     // Apply Model to World Transformations
-    Vec3f *world_verts = (Vec3f *) malloc(sizeof(Vec3f) * m.numVerts);
+    Vec3f *clip_verts = (Vec3f *) malloc(sizeof(Vec3f) * m.numVerts);
     TformMatrix world_tform = ScaleTform(m.scale);
     world_tform = TformMatrix_Multiply(RotationXTform(m.world_rot.x), world_tform);
     world_tform = TformMatrix_Multiply(RotationYTform(m.world_rot.y), world_tform);
     world_tform = TformMatrix_Multiply(RotationZTform(m.world_rot.z), world_tform);
     world_tform = TformMatrix_Multiply(TranslateTform(m.world_loc), world_tform);
     for (uint32_t i = 0; i < m.numVerts; i++) {
-        world_verts[i] = TformPoint_to_Vec3f(TformMatrix_Apply(world_tform, Vec3f_to_TformPoint(m.verts[i])));
+        clip_verts[i] = TformPoint_to_Vec3f(TformMatrix_Apply(world_tform, Vec3f_to_TformPoint(m.verts[i])));
     }
 
     for (uint32_t i = 0; i < view_count; i++) {
@@ -67,12 +58,13 @@ void RenderModel(View *views, uint32_t view_count, ModelData m) {
         View *v = views+i;
         Vec3i *screen_verts = (Vec3i *) malloc(sizeof(Vec3i) * m.numVerts);
         TformMatrix clip_tform = LookAtTform(v->eye_pos, v->look_pos, (Vec3f) {0, 1, 0});
-        clip_tform = TformMatrix_Multiply(PerspectiveTform(v->fov, ((float) v->w)/v->h, 1, 200), clip_tform);
+        clip_tform = TformMatrix_Multiply(PerspectiveTform(v->fov, ((float) v->w)/v->h, 1, 50), clip_tform);
         TformMatrix screen_tform = ViewportTform(0, 0, v->w, v->h);
 
         // Clip verts and convert to screen space
         for (uint32_t j = 0; j < m.numVerts; j++) {
-            Vec3f clip_vert = TformPoint_to_Vec3f(TformMatrix_Apply(clip_tform, Vec3f_to_TformPoint(world_verts[j])));
+            Vec3f clip_vert = TformPoint_to_Vec3f(TformMatrix_Apply(clip_tform, Vec3f_to_TformPoint(clip_verts[j])));
+            clip_verts[j] = clip_vert;
             if (clip_vert.x >= -1 && clip_vert.y >= -1 && clip_vert.z >= -1 &&
                 clip_vert.x <= 1 && clip_vert.y <= 1 && clip_vert.z <= 1) {
                 Vec3f screen_vert = TformPoint_to_Vec3f(TformMatrix_Apply(screen_tform, Vec3f_to_TformPoint(clip_vert)));
@@ -101,10 +93,11 @@ void RenderModel(View *views, uint32_t view_count, ModelData m) {
 
             switch (prim_type) {
                 case PRIMATIVE_TRIANGLE: {
-                    Vec3f n = Vec3f_CrossProduct(Vec3f_Subtract(world_verts[prim_idx[2]], world_verts[prim_idx[0]]),
-                                                 Vec3f_Subtract(world_verts[prim_idx[1]], world_verts[prim_idx[0]]));
+                    Vec3f n = Vec3f_CrossProduct(Vec3f_Subtract(clip_verts[prim_idx[1]], clip_verts[prim_idx[0]]),
+                                                 Vec3f_Subtract(clip_verts[prim_idx[2]], clip_verts[prim_idx[0]]));
                     n = Vec3f_Normalize(n);
-                    float inten = Vec3f_DotProduct(n, Vec3f_Normalize(Vec3f_Subtract(v->look_pos, v->eye_pos)));
+                    float inten = Vec3f_DotProduct(n, Vec3f_Normalize(clip_verts[prim_idx[0]]));
+                    //float inten = Vec3f_DotProduct(n, V3F(0, 0, -1));
                     if (inten > 0) {
                         uint32_t color = 205*inten + 50;
                         DrawTriangle(v, screen_verts[prim_idx[0]],
@@ -123,7 +116,7 @@ void RenderModel(View *views, uint32_t view_count, ModelData m) {
         free(screen_verts);
     }   
 
-    free(world_verts);
+    free(clip_verts);
 }
 
 void DrawLine(View *v, int32_t x0, int32_t y0, int32_t x1, int32_t y1, RGBData color) {
@@ -226,73 +219,3 @@ void DrawTriangle(View *v, Vec3i v0, Vec3i v1, Vec3i v2, RGBData color) {
         }
     }
 }*/
-
-static TformMatrix LookAtTform(Vec3f eye, Vec3f center, Vec3f up) {
-    Vec3f z = Vec3f_Normalize(Vec3f_Subtract(eye, center));
-    Vec3f x = Vec3f_Normalize(Vec3f_CrossProduct(up, z));
-    Vec3f y = Vec3f_Normalize(Vec3f_CrossProduct(z, x));
-    TformMatrix Minv = {{{x.x, x.y, x.z, 0},
-                         {y.x, y.y, y.z, 0},
-                         {z.x, z.y, z.z, 0},
-                         {0,   0,   0,   1}}};
-    return TformMatrix_Multiply(Minv, TranslateTform(Vec3f_Negate(eye)));
-}
-
-static TformMatrix ViewportTform(int32_t x, int32_t y, int32_t w, int32_t h) {
-    TformMatrix out = {{{w/2,    0,            0, x + w/2},
-                        {  0, -h/2,            0, y + h/2},
-                        {  0,    0,    INT32_MAX,      -1},
-                        {  0,    0,            0,       1}}};
-    return out;
-}
-
-static TformMatrix PerspectiveTform(float fov, float aspect, float zNear, float zFar) {
-    float f = 1/tanf(fov);
-    float zscale = (zFar+zNear)/(zNear-zFar);
-    float ztrans = 2*zFar*zNear/(zNear-zFar);
-    TformMatrix out = {{{f/aspect, 0,      0,      0},
-                        {       0, f,      0,      0},
-                        {       0, 0, zscale, ztrans},
-                        {       0, 0,     -1,      0}}};
-    return out;
-}
-
-static TformMatrix ScaleTform(Vec3f s) {
-    TformMatrix out = {{{s.x,   0,   0, 0},
-                        {  0, s.y,   0, 0},
-                        {  0,   0, s.z, 0},
-                        {  0,   0,   0, 1}}};
-    return out; 
-}
-
-static TformMatrix TranslateTform(Vec3f t) {
-    TformMatrix out = {{{ 1, 0, 0, t.x},
-                        { 0, 1, 0, t.y},
-                        { 0, 0, 1, t.z},
-                        { 0, 0, 0,   1}}};
-    return out; 
-}
-
-static TformMatrix RotationXTform(float rot) {
-    TformMatrix out = {{{1,         0,          0, 0},
-                        {0, cosf(rot), -sinf(rot), 0},
-                        {0, sinf(rot),  cosf(rot), 0},
-                        {0,         0,          0, 1}}};
-    return out;
-}
-
-static TformMatrix RotationYTform(float rot) {
-    TformMatrix out = {{{ cosf(rot), 0, sinf(rot), 0},
-                        {         0, 1,         0, 0},
-                        {-sinf(rot), 0, cosf(rot), 0},
-                        {         0, 0,         0, 1}}};
-    return out;
-}
-
-static TformMatrix RotationZTform(float rot) {
-    TformMatrix out = {{{cosf(rot), -sinf(rot), 0, 0},
-                        {sinf(rot),  cosf(rot), 0, 0},
-                        {        0,          0, 1, 0},
-                        {        0,          0, 0, 1}}};
-    return out;
-}
