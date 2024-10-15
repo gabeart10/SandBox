@@ -2,9 +2,8 @@
 #include <stdlib.h>
 #include "OBJReader.h"
 
-OBJData ReadOBJ(const char * const fileName) {
-    OBJData obj_data = {.numFaces = 0, .numVerts = 0,
-                        .faces = NULL, .verts = NULL};
+ModelData ReadOBJ(const char * const fileName) {
+    ModelData obj_data = DEFAULT_MODEL;
     FILE *f = fopen(fileName, "r");
     if (f == NULL) {
         printf("OBJReader: Failed to open file...\n");
@@ -17,13 +16,13 @@ OBJData ReadOBJ(const char * const fileName) {
         if (line[0] == 'v' && line[1] == ' ') {
             obj_data.numVerts++;
         } else if (line[0] == 'f' && line[1] == ' ') {
-            obj_data.numFaces++;
+            obj_data.numPrimatives++;
         }
     }
 
     // Build buffs and read file data
     obj_data.verts = malloc(sizeof(Vec3f)*obj_data.numVerts);
-    obj_data.faces = malloc(sizeof(OBJFace)*obj_data.numFaces);
+    obj_data.primatives = malloc(sizeof(uint32_t)*4*obj_data.numPrimatives);
     uint32_t curr_vert = 0;
     uint32_t curr_face = 0;
     rewind(f);
@@ -38,20 +37,22 @@ OBJData ReadOBJ(const char * const fileName) {
             curr_vert++;
         } else if (line[0] == 'f' && line[1] == ' ') {
             // TODO: Make parsing work for all types of f lines
+            uint32_t *face_loc = obj_data.primatives+(curr_face*4);
+            *face_loc = PRIMATIVE_TRIANGLE;
             if (sscanf(line + 2, "%d/%*d/%*d %d/%*d/%*d %d/%*d/%*d",
-                obj_data.faces[curr_face].vertIdxs,
-                obj_data.faces[curr_face].vertIdxs+1,
-                obj_data.faces[curr_face].vertIdxs+2) < 3) {
+                face_loc+1,
+                face_loc+2,
+                face_loc+3) < 3) {
                 printf("OBJReader: Error Reading Face %d...\n", curr_face); 
             }
-            obj_data.faces[curr_face].vertIdxs[0]--;
-            obj_data.faces[curr_face].vertIdxs[1]--;
-            obj_data.faces[curr_face].vertIdxs[2]--;
+            face_loc[1]--;
+            face_loc[2]--;
+            face_loc[3]--;
             curr_face++;
         }
     }
 
     fclose(f);
-    printf("OBJReader: Loaded OBJ with %d verts and %d faces...\n", obj_data.numVerts, obj_data.numFaces);
+    printf("OBJReader: Loaded OBJ with %d verts and %d faces...\n", obj_data.numVerts, obj_data.numPrimatives);
     return obj_data;
 }

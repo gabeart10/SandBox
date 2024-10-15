@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <math.h>
 
+#define V3F(x, y, z) ((Vec3f) {x, y, z})
+
 typedef struct {
     uint32_t x;
     uint32_t y;
@@ -49,6 +51,13 @@ static inline Vec3f Vec3f_Normalize(Vec3f a) {
     a.x /= mag;
     a.y /= mag;
     a.z /= mag;
+    return a;
+}
+
+static inline Vec3f Vec3f_Negate(Vec3f a) {
+    a.x *= -1;
+    a.y *= -1;
+    a.z *= -1;
     return a;
 }
 
