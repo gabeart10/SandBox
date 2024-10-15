@@ -28,9 +28,9 @@ int main() {
 
     ModelData data = ReadOBJ("../objs/head.obj");
     v->look_pos = V3F(0, 0, 0);
-    v->eye_pos = V3F(0, 0, 1);
+    v->eye_pos = V3F(0, 0, 5);
     v->fov = 45;
-    float eye_delta_z = -0.1;
+    float eye_delta_z = 0.1;
     SDL_Event event;
     while (1) {
         if (SDL_PollEvent(&event)) {
@@ -39,10 +39,10 @@ int main() {
 
         clock_t start = clock();
         RenderModel(v, 1, data);
-        /*if (camera_eye.z <= 0.8 || camera_eye.z >= 2) {
+        if (v->eye_pos.z <= 0.5 || v->eye_pos.z >= 5) {
             eye_delta_z *= -1;
         }
-        camera_eye.z += eye_delta_z;*/
+        v->eye_pos.z += eye_delta_z;
 
         float render_time = ((double) (clock() - start))/CLOCKS_PER_SEC;
         printf("Time Taken: %fsec\nCenter Z: %f\n", render_time, v->eye_pos.z);

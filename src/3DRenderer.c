@@ -67,24 +67,25 @@ void RenderModel(View *views, uint32_t view_count, ModelData m) {
         View *v = views+i;
         Vec3i *screen_verts = (Vec3i *) malloc(sizeof(Vec3i) * m.numVerts);
         TformMatrix clip_tform = LookAtTform(v->eye_pos, v->look_pos, (Vec3f) {0, 1, 0});
-        clip_tform = TformMatrix_Multiply(PerspectiveTform(v->fov, ((float) v->w)/v->h, 0.5, 200), clip_tform);
+        clip_tform = TformMatrix_Multiply(PerspectiveTform(v->fov, ((float) v->w)/v->h, 1, 200), clip_tform);
         TformMatrix screen_tform = ViewportTform(0, 0, v->w, v->h);
 
         // Clip verts and convert to screen space
-        for (uint32_t i = 0; i < m.numVerts; i++) {
-            Vec3f clip_vert = TformPoint_to_Vec3f(TformMatrix_Apply(clip_tform, Vec3f_to_TformPoint(world_verts[i])));
-            if (clip_vert.x+1 >= 0 && clip_vert.y+1 >= 0 && clip_vert.z+1 >= 0) {
+        for (uint32_t j = 0; j < m.numVerts; j++) {
+            Vec3f clip_vert = TformPoint_to_Vec3f(TformMatrix_Apply(clip_tform, Vec3f_to_TformPoint(world_verts[j])));
+            if (clip_vert.x >= -1 && clip_vert.y >= -1 && clip_vert.z >= -1 &&
+                clip_vert.x <= 1 && clip_vert.y <= 1 && clip_vert.z <= 1) {
                 Vec3f screen_vert = TformPoint_to_Vec3f(TformMatrix_Apply(screen_tform, Vec3f_to_TformPoint(clip_vert)));
-                screen_verts[i] = (Vec3i) {screen_vert.x, screen_vert.y, screen_vert.z};
+                screen_verts[j] = (Vec3i) {screen_vert.x, screen_vert.y, screen_vert.z};
             } else { 
-                screen_verts[i] = INVALID_SCREEN_VERT;
+                screen_verts[j] = INVALID_SCREEN_VERT;
             }
         }
 
         // Display Primatives
         uint32_t *prim_idx = m.primatives;
         ClearViewBuffers(v);
-        for (uint32_t i = 0; i < m.numPrimatives; i++) {
+        for (uint32_t j = 0; j < m.numPrimatives; j++) {
             PrimativeType prim_type = *(prim_idx++);
             bool draw_prim = true;
             for (uint32_t vi = 0; vi < prim_type; vi++) {
@@ -93,7 +94,10 @@ void RenderModel(View *views, uint32_t view_count, ModelData m) {
                     break;
                 }
             }
-            if (!draw_prim) continue;            
+            if (!draw_prim) {
+                prim_idx += prim_type;
+                continue;            
+            }
 
             switch (prim_type) {
                 case PRIMATIVE_TRIANGLE: {
@@ -265,7 +269,7 @@ static TformMatrix TranslateTform(Vec3f t) {
     TformMatrix out = {{{ 1, 0, 0, t.x},
                         { 0, 1, 0, t.y},
                         { 0, 0, 1, t.z},
-                        { 0, 0, 1,   1}}};
+                        { 0, 0, 0,   1}}};
     return out; 
 }
 
@@ -287,7 +291,7 @@ static TformMatrix RotationYTform(float rot) {
 
 static TformMatrix RotationZTform(float rot) {
     TformMatrix out = {{{cosf(rot), -sinf(rot), 0, 0},
-                        {sinf(rot),  cosf(rot), 1, 0},
+                        {sinf(rot),  cosf(rot), 0, 0},
                         {        0,          0, 1, 0},
                         {        0,          0, 0, 1}}};
     return out;
