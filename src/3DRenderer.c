@@ -68,7 +68,7 @@ void RenderModel(View *views, uint32_t view_count, ModelData m) {
             if (clip_vert.x >= -1 && clip_vert.y >= -1 && clip_vert.z >= -1 &&
                 clip_vert.x <= 1 && clip_vert.y <= 1 && clip_vert.z <= 1) {
                 Vec3f screen_vert = TformPoint_to_Vec3f(TformMatrix_Apply(screen_tform, Vec3f_to_TformPoint(clip_vert)));
-                screen_verts[j] = (Vec3i) {screen_vert.x, screen_vert.y, screen_vert.z};
+                screen_verts[j] = (Vec3i) {roundf(screen_vert.x), roundf(screen_vert.y), roundf(screen_vert.z)};
             } else { 
                 screen_verts[j] = INVALID_SCREEN_VERT;
             }
@@ -97,7 +97,6 @@ void RenderModel(View *views, uint32_t view_count, ModelData m) {
                                                  Vec3f_Subtract(clip_verts[prim_idx[2]], clip_verts[prim_idx[0]]));
                     n = Vec3f_Normalize(n);
                     float inten = Vec3f_DotProduct(n, Vec3f_Normalize(clip_verts[prim_idx[0]]));
-                    //float inten = Vec3f_DotProduct(n, V3F(0, 0, -1));
                     if (inten > 0) {
                         uint32_t color = 205*inten + 50;
                         DrawTriangle(v, screen_verts[prim_idx[0]],
