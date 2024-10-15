@@ -1,5 +1,5 @@
-#ifndef PUB_RENDERER_H
-#define PUB_RENDERER_H
+#ifndef PUB_3DENGINE_H
+#define PUB_3DENGINE_H
 
 #include <stdint.h>
 #include "Vectors.h"
@@ -22,14 +22,14 @@ typedef struct {
 
 typedef struct {
     uint32_t vertIdxs[3];
-} OBJFace;
+} ModelFace;
 
 typedef struct {
     uint32_t numVerts;
     Vec3f *verts;
     uint32_t numFaces;
-    OBJFace *faces;
-} OBJData;
+    ModelFace *faces;
+} ModelData;
 
 static inline uint32_t GetPixelOffset(Renderer *r, uint32_t x, uint32_t y) {
     return r->w*y + x;

@@ -23,7 +23,7 @@ pico_sdk_init()
 
 # COMMON
 set(COMMON_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/include)
-set(COMMON_SOURCES src/Renderer.c)
+set(COMMON_SOURCES src/3DEngine.c)
 
 # ---SIM TARGET---
 find_package(SDL2 REQUIRED)
