@@ -10,6 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # (note this can come from environment, CMake cache etc)
 
 set(PICO_BOARD pico2 CACHE STRING "Board type")
+add_compile_definitions(PICO_HEAP_SIZE=0x0)
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico-sdk/pico_sdk_init.cmake)
 
@@ -43,7 +44,7 @@ pico_enable_stdio_usb(SandBoxPico 1)
 target_link_libraries(SandBoxPico
         pico_stdlib
         FreeRTOS-Kernel
-        FreeRTOS-Kernel-Heap4
+        #FreeRTOS-Kernel-Heap4
         m)
 
 # Add the standard include files to the build
