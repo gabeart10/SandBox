@@ -26,7 +26,7 @@ set(COMMON_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/include)
 set(COMMON_SOURCES src/3DRenderer.c)
 
 # ---SIM TARGET---
-find_package(SDL2 REQUIRED)
+find_package(SDL2)
 
 add_executable(SandBoxSim ${COMMON_SOURCES} src/SandBoxSim.c src/OBJReader.c)
 target_include_directories(SandBoxSim PRIVATE ${SDL2_INCLUDE_DIRS} ${COMMON_INCLUDES})
@@ -43,6 +43,7 @@ pico_enable_stdio_usb(SandBoxPico 1)
 target_link_libraries(SandBoxPico
         pico_stdlib
         FreeRTOS-Kernel
+        FreeRTOS-Kernel-Heap4
         m)
 
 # Add the standard include files to the build
