@@ -10,6 +10,8 @@
 
 #define INVALID_SCREEN_VERT ((Vec3i) {-1, -1, 0})
 
+#define MAX_MODEL_VERTS (1000)
+
 static inline int32_t max(int32_t a, int32_t b) {
     return (a > b) ? a : b;
 }
@@ -20,18 +22,15 @@ static inline int32_t min(int32_t a, int32_t b) {
 
 static Vec3f GetBarycentric(Vec3i a, Vec3i b, Vec3i c, Vec2i p);
 
-View * CreateView(uint32_t width, uint32_t height) {
-    View *v = (View *) malloc(sizeof(View));
+void InitView(View *v, uint32_t width, uint32_t height, RGBData *framebuff, int32_t *zbuffer) {
     v->w = width;
     v->h = height;
     v->look_pos = (Vec3f) {0, 0, 0};
     v->eye_pos = (Vec3f) {0, 0, 1};
-    v->framebuf = (RGBData *) malloc(sizeof(RGBData) * width * height);
-    v->zbuffer = (int32_t *) malloc(sizeof(int32_t) * width * height);
+    v->framebuf = framebuff;
+    v->zbuffer = zbuffer;
 
     ClearViewBuffers(v);
-
-    return v;
 }
 
 void ClearViewBuffers(View *v) {
@@ -43,7 +42,10 @@ void ClearViewBuffers(View *v) {
 
 void RenderModel(View *views, uint32_t view_count, ModelData m) {
     // Apply Model to World Transformations
-    Vec3f *clip_verts = (Vec3f *) malloc(sizeof(Vec3f) * m.numVerts);
+    static Vec3f clip_verts[MAX_MODEL_VERTS];
+    static Vec3i screen_verts[MAX_MODEL_VERTS];
+    if (m.numVerts > MAX_MODEL_VERTS) return;
+
     TformMatrix world_tform = ScaleTform(m.scale);
     world_tform = TformMatrix_Multiply(RotationXTform(m.world_rot.x), world_tform);
     world_tform = TformMatrix_Multiply(RotationYTform(m.world_rot.y), world_tform);
@@ -56,7 +58,6 @@ void RenderModel(View *views, uint32_t view_count, ModelData m) {
     for (uint32_t i = 0; i < view_count; i++) {
         // Build World to Clip Transformation
         View *v = views+i;
-        Vec3i *screen_verts = (Vec3i *) malloc(sizeof(Vec3i) * m.numVerts);
         TformMatrix clip_tform = LookAtTform(v->eye_pos, v->look_pos, (Vec3f) {0, 1, 0});
         clip_tform = TformMatrix_Multiply(PerspectiveTform(v->fov, ((float) v->w)/v->h, 1, 50), clip_tform);
         TformMatrix screen_tform = ViewportTform(0, 0, v->w, v->h);
@@ -111,11 +112,7 @@ void RenderModel(View *views, uint32_t view_count, ModelData m) {
 
             prim_idx += prim_type;
         }
-
-        free(screen_verts);
     }   
-
-    free(clip_verts);
 }
 
 void DrawLine(View *v, int32_t x0, int32_t y0, int32_t x1, int32_t y1, RGBData color) {

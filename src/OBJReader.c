@@ -22,6 +22,7 @@ ModelData ReadOBJ(const char * const fileName) {
 
     // Build buffs and read file data
     obj_data.verts = malloc(sizeof(Vec3f)*obj_data.numVerts);
+    obj_data.primativesSize = 4 * obj_data.numPrimatives; 
     obj_data.primatives = malloc(sizeof(uint32_t)*4*obj_data.numPrimatives);
     uint32_t curr_vert = 0;
     uint32_t curr_face = 0;

@@ -5,7 +5,7 @@
 #include "Vectors.h"
 #include "Matrix.h"
 
-#define DEFAULT_MODEL ((ModelData) {0, NULL, 0, NULL, {0}, {0}, {1, 1, 1}})
+#define DEFAULT_MODEL ((ModelData) {0, NULL, 0, 0, NULL, {0}, {0}, {1, 1, 1}})
 
 // TODO: Support more than triangle
 enum {
@@ -40,6 +40,7 @@ typedef struct {
     uint32_t numVerts;
     Vec3f *verts;
     uint32_t numPrimatives;
+    uint32_t primativesSize;
     uint32_t *primatives;
     Vec3f world_rot;
     Vec3f world_loc;
@@ -134,7 +135,7 @@ static inline TformMatrix RotationZTform(float rot) {
     return out;
 }
 
-View * CreateView(uint32_t width, uint32_t height);
+void InitView(View *v, uint32_t width, uint32_t height, RGBData *framebuff, int32_t *zbuffer);
 
 void ClearViewBuffers(View *v);
 

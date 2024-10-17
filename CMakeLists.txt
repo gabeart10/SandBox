@@ -26,6 +26,11 @@ pico_sdk_init()
 set(COMMON_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/include)
 set(COMMON_SOURCES src/3DRenderer.c)
 
+# ---EMBEDDED OBJ CONVERTER---
+add_executable(EmbeddedOBJConverter ${COMMON_SOURCES} src/EmbeddedOBJConverter.c src/OBJReader.c)
+target_include_directories(EmbeddedOBJConverter PRIVATE ${COMMON_INCLUDES})
+target_link_libraries(EmbeddedOBJConverter m)
+
 # ---SIM TARGET---
 find_package(SDL2)
 
@@ -34,7 +39,7 @@ target_include_directories(SandBoxSim PRIVATE ${SDL2_INCLUDE_DIRS} ${COMMON_INCL
 target_link_libraries(SandBoxSim m ${SDL2_LIBRARIES})
 
 # ---PICO TARGET--- 
-add_executable(SandBoxPico ${COMMON_SOURCES} src/SandBoxPico.c )
+add_executable(SandBoxPico ${COMMON_SOURCES} src/SandBoxPico.c objs/suzanne.c )
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(SandBoxPico 0)
